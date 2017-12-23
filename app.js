@@ -91,7 +91,7 @@ new DB().connect(db => {
 
 
     app.use('/', router);
-    app.listen(PORT);
+    app.listen();
 
     process.on('SIGINT', () => {
         db.close((err, result) => {
