@@ -6,7 +6,7 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const { DB } = require('./db.js');
 const { createSessionAndGetId, queryQuest, queryQuestion, querySessionInfo, questExists, updateSession } = require('./dbUtils.js');
-const PORT = process.argv[2] ? process.argv[2] : 8000;
+const PORT = process.argv[2] ? process.argv[2] : 80;
 
 
 app.use(bodyParser.text({
