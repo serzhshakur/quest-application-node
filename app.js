@@ -6,7 +6,7 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const { DB } = require('./db.js');
 const { createSessionAndGetId, queryQuest, queryQuestion, querySessionInfo, questExists, updateSession } = require('./dbUtils.js');
-const PORT = process.argv[2] ? process.argv[2] : 80;
+const PORT = process.env.PORT || 8080;
 
 
 app.use(bodyParser.text({
@@ -91,7 +91,7 @@ new DB().connect(db => {
 
 
     app.use('/', router);
-    app.listen();
+    app.listen(PORT);
 
     process.on('SIGINT', () => {
         db.close((err, result) => {
