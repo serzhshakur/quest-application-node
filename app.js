@@ -89,6 +89,8 @@ new DB().connect(db => {
             .then(() => response.send({ hint: hint, hintRetrievals: hintRetrievals }));
     })
 
+    app.get('*', (request, response) => response.redirect('/'))
+
 
     app.use('/', router);
     app.listen(PORT);
