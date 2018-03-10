@@ -113,7 +113,7 @@ new DB().connect(db => {
         }
     })
 
-    app.get('*', (request, response) => response.redirect('/'))
+    app.get('*', (request, response) => response.sendfile('./public/index.html'));
 
 
     app.use('/', router);
