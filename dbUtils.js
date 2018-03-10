@@ -14,6 +14,16 @@ module.exports.queryQuestion = (db, questId, questionIndex) => {
         .then(quest => quest.questions[questionIndex]);
 }
 
+module.exports.queryQuestIntro = (db, questId) => {
+    return queryQuest(db, questId)
+        .then(quest => quest.intro);
+}
+
+module.exports.queryQuestFinalWords = (db, questId) => {
+    return queryQuest(db, questId)
+        .then(quest => quest.finalWords);
+}
+
 module.exports.questExists = (db, questId) => {
     return db.collection('questions')
         .find({ 'id': questId }).count()
@@ -31,12 +41,12 @@ module.exports.querySessionInfo = (db, sessionId) => {
 module.exports.createSessionAndGetId = (db, questId) => {
     return db.collection('sessions')
         .insertOne(
-        {
-            'questId': questId,
-            'questionIndex': 0,
-            'wrongAnswers': 0,
-            'hintRetrievals': 0
-        })
+            {
+                'questId': questId,
+                'questionIndex': 0,
+                'wrongAnswers': 0,
+                'hintRetrievals': 0
+            })
         .catch(err => console.error(`Error while creating session for quest id ${questId}`))
         .then((r) => r.insertedId.toString())
 }

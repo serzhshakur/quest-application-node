@@ -5,7 +5,17 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const { DB } = require('./db.js');
-const { createSessionAndGetId, queryQuest, queryQuestion, querySessionInfo, questExists, updateSession } = require('./dbUtils.js');
+const {
+    createSessionAndGetId,
+    queryQuest,
+    queryQuestion,
+    querySessionInfo,
+    questExists,
+    updateSession,
+    queryQuestIntro,
+    queryQuestFinalWords
+} = require('./dbUtils.js');
+
 const PORT = process.env.PORT || 8080;
 
 
@@ -67,6 +77,28 @@ new DB().connect(db => {
                 )
         })
 
+    app.get('/questions/intro/', async (request, response) => {
+        const sessionId = request.cookies.id;
+        let { questId } = await querySessionInfo(db, sessionId);
+        const intro = await queryQuestIntro(db, questId);
+        response.send(intro);
+    })
+
+    app.get('/questions/final/', async (request, response) => {
+        const sessionId = request.cookies.id;
+        let { questId } = await querySessionInfo(db, sessionId);
+        const finalWords = await queryQuestFinalWords(db, questId);
+        response.send(finalWords);
+    })
+
+    app.get('/questions/hint/', async (request, response) => {
+        const sessionId = request.cookies.id;
+        let { questionIndex, questId, hintRetrievals } = await querySessionInfo(db, sessionId);
+        const { hint } = await queryQuestion(db, questId, questionIndex);
+        updateSession(db, sessionId, { 'hintRetrievals': ++hintRetrievals })
+            .then(() => response.send({ hint: hint, hintRetrievals: hintRetrievals }));
+    })
+
     app.post('/sign-in', async (request, response) => {
         const questId = request.body;
         if (questId) {
@@ -79,14 +111,6 @@ new DB().connect(db => {
                 response.status(400).send("Incorrect id provided");
             }
         }
-    })
-
-    app.get('/questions/hint/', async (request, response) => {
-        const sessionId = request.cookies.id;
-        let { questionIndex, questId, hintRetrievals } = await querySessionInfo(db, sessionId);
-        const { hint } = await queryQuestion(db, questId, questionIndex);
-        updateSession(db, sessionId, { 'hintRetrievals': ++hintRetrievals })
-            .then(() => response.send({ hint: hint, hintRetrievals: hintRetrievals }));
     })
 
     app.get('*', (request, response) => response.redirect('/'))
