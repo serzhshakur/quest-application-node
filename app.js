@@ -113,10 +113,10 @@ new DB().connect(db => {
         }
     })
 
+    app.use('/', router);
+
     app.get('*', (request, response) => response.sendfile('./public/index.html'));
 
-
-    app.use('/', router);
     app.listen(PORT);
 
     process.on('SIGINT', () => {
