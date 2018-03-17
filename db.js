@@ -21,6 +21,14 @@ class DB {
                 const db = client.db(this.db);
                 callback(db);
             }
+            process.on('SIGINT', () => {
+                client.close((err, result) => {
+                    if (err) {
+                        console.log("Error occurred while trying to close connection to db \n", err);
+                        process.exit(0);
+                    }
+                });
+            });
         });
     }
 
