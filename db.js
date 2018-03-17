@@ -25,8 +25,8 @@ class DB {
                 client.close((err, result) => {
                     if (err) {
                         console.log("Error occurred while trying to close connection to db \n", err);
-                        process.exit(0);
                     }
+                    process.exit(0);
                 });
             });
         });
