@@ -119,14 +119,4 @@ new DB().connect(db => {
 
     app.listen(PORT);
 
-    process.on('SIGINT', () => {
-        db.close((err, result) => {
-            if (err) {
-                console.log("Error occurred while trying to close connection to db \n", err);
-            } else if (result) {
-                console.log('Closed db connection with result ', result)
-            }
-            process.exit(0);
-        });
-    });
 })
