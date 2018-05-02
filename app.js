@@ -4,17 +4,18 @@ const router = express.Router();
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
-const { DB } = require('./db.js');
+const questsRoute  = require('./src/routes/quests');
+const { DB } = require('./src/db');
 const {
     createSessionAndGetId,
     queryQuest,
     queryQuestion,
     querySessionInfo,
     questExists,
-    updateSession,
     queryQuestIntro,
-    queryQuestFinalWords
-} = require('./dbUtils.js');
+    queryQuestFinalWords,
+    updateSession
+} = require('./src/dbUtils');
 
 const PORT = process.env.PORT || 8080;
 
@@ -30,7 +31,7 @@ app.use(cookieParser())
 
 // https://stackoverflow.com/questions/42710057/fetch-cannot-set-cookies-received-from-the-server
 var corsOptions = {
-    // origin: 'http://my.localhost.com:8080',
+    origin: 'http://my.localhost.com:8081',
     credentials: true
 }
 
@@ -114,6 +115,7 @@ new DB().connect(db => {
     })
 
     app.use('/', router);
+    app.use('/quests', questsRoute(db));
 
     app.get('*', (request, response) => response.sendfile('./public/index.html'));
 

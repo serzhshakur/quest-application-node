@@ -2,12 +2,40 @@ const { ObjectID } = require('mongodb');
 
 function queryQuest(db, questId) {
     return db.collection('questions')
-        .find({ 'id': questId }).toArray()
+        .find({ 'id': questId })
+        .project({ _id: false }).toArray()
         .then(array => array[0])
         .catch(err => console.error(`Error while quering quest with id ${questId}`));
 }
 
 module.exports.queryQuest = queryQuest;
+
+module.exports.queryQuests = db => {
+    return db.collection('questions')
+        .find({})
+        .project({ _id: false }).toArray()
+        .catch(err => console.error(`Error while quering quests: \n${e}`));
+}
+
+module.exports.createQuest = (db, quest) => {
+    return db.collection('questions')
+        .insertOne(quest)
+        .catch(err => console.error(`Error while creating quest ${quest}`))
+}
+
+module.exports.updateQuest = (db, questId, newValues) => {
+    return db.collection('questions')
+        .findOneAndUpdate(
+            { id: questId },
+            { "$set": newValues },
+            {
+                returnOriginal: false,
+                projection: { _id: false }
+            }
+        )
+        .catch(err => console.error(`Error updating quest ${questId}: `, err))
+        .then(result => result.value);
+}
 
 module.exports.queryQuestion = (db, questId, questionIndex) => {
     return queryQuest(db, questId)
