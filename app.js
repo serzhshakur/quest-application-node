@@ -50,9 +50,9 @@ new DB().connect(db => {
             const isEnd = questions.length === questionIndex;
             const body = { isEnd: isEnd };
             if (!isEnd) {
-                const { question } = questions[questionIndex];
+                const { text, images } = questions[questionIndex];
                 Object.assign(body, {
-                    question: question,
+                    text, images,
                     wrongAnswers: wrongAnswers,
                     hintRetrievals: hintRetrievals
                 })
