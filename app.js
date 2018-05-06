@@ -4,7 +4,8 @@ const router = express.Router();
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
-const questsRoute  = require('./src/routes/quests');
+const questsRoute = require('./src/routes/quests');
+
 const { DB } = require('./src/db');
 const {
     createSessionAndGetId,
@@ -115,7 +116,7 @@ new DB().connect(db => {
     })
 
     app.use('/', router);
-    app.use('/quests', questsRoute(db));
+    app.use('/admin', questsRoute(db));
 
     app.get('*', (request, response) => response.sendfile('./public/index.html'));
 
