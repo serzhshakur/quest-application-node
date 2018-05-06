@@ -85,3 +85,12 @@ module.exports.updateSession = (db, sessionId, newValues) => {
         .catch(err => console.error(`Error updating session ${sessionId}: `, err))
         .then(() => console.log(`successfully updated a session ${sessionId} with values ${JSON.stringify(newValues)}`));
 }
+
+module.exports.getUser = (db, username) => {
+    return db.collection('users')
+        .find({ 'username': username })
+        .project({ _id: false })
+        .toArray()
+        .catch(err => console.error(`Error getting a user ${username}: `, err))
+        .then(arr => arr[0])
+}
