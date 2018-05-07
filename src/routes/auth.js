@@ -4,7 +4,7 @@ const bcrypt = require("bcrypt");
 const jwt = require('jsonwebtoken');
 const { getUser } = require('../dbUtils');
 
-const TOKEN_SECRET = '$2b$05$axP8ThXG8GrWRT0x6BMSs'
+const JWT_SECRET_TOKEN = process.env.JWT_SECRET_TOKEN
 const TOKEN_EXPIRATION_PERIOD = '20h'
 
 module.exports = db => {
@@ -24,7 +24,7 @@ module.exports = db => {
                     username: userData.username,
                     id: userData.id
                 }
-                const token = jwt.sign(payload, TOKEN_SECRET, { expiresIn: TOKEN_EXPIRATION_PERIOD });
+                const token = jwt.sign(payload, JWT_SECRET_TOKEN, { expiresIn: TOKEN_EXPIRATION_PERIOD });
                 res.status(200).send({ token })
             } else {
                 res.status(401).send('incorrect password');
@@ -34,7 +34,7 @@ module.exports = db => {
     router.use((req, res, next) => {
         var token = req.headers['x-access-token'];
         if (token) {
-            jwt.verify(token, TOKEN_SECRET, err => {
+            jwt.verify(token, JWT_SECRET_TOKEN, err => {
                 if (!err) {
                     next();
                 } else {
