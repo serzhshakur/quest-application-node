@@ -1,6 +1,5 @@
 const express = require('express');
 const app = express();
-const router = express.Router();
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
@@ -31,9 +30,12 @@ app.use(bodyParser.json());
 app.use(cookieParser())
 
 // https://stackoverflow.com/questions/42710057/fetch-cannot-set-cookies-received-from-the-server
-var corsOptions = {
-    origin: 'http://my.localhost.com:8081',
+let corsOptions = {
     credentials: true
+}
+
+if (process.env.CORS_ORIGIN) {
+    corsOptions.origin = process.env.CORS_ORIGIN
 }
 
 app.use(cors(corsOptions));
@@ -43,20 +45,16 @@ app.use(express.static('public'))
 
 new DB().connect(db => {
 
-    router.route('/questions')
+    app.route('/questions')
         .get(async (request, response) => {
             const sessionId = request.cookies.id;
             const { questionIndex, questId, wrongAnswers, hintRetrievals } = await querySessionInfo(db, sessionId);
             const { questions } = await queryQuest(db, questId);
             const isEnd = questions.length === questionIndex;
-            const body = { isEnd: isEnd };
+            const body = { isEnd };
             if (!isEnd) {
                 const { text, images } = questions[questionIndex];
-                Object.assign(body, {
-                    text, images,
-                    wrongAnswers: wrongAnswers,
-                    hintRetrievals: hintRetrievals
-                })
+                Object.assign(body, { text, images, wrongAnswers, hintRetrievals })
             }
             response.send(body);
         })
@@ -71,9 +69,9 @@ new DB().connect(db => {
             } else {
                 wrongAnswers++;
             }
-            updateSession(db, sessionId, { 'questionIndex': questionIndex, 'wrongAnswers': wrongAnswers })
+            updateSession(db, sessionId, { questionIndex, wrongAnswers })
                 .then(() => response.status(200).send({
-                    wrongAnswers: wrongAnswers,
+                    wrongAnswers,
                     questionNumber: questionIndex
                 })
                 )
@@ -98,7 +96,7 @@ new DB().connect(db => {
         let { questionIndex, questId, hintRetrievals } = await querySessionInfo(db, sessionId);
         const { hint } = await queryQuestion(db, questId, questionIndex);
         updateSession(db, sessionId, { 'hintRetrievals': ++hintRetrievals })
-            .then(() => response.send({ hint: hint, hintRetrievals: hintRetrievals }));
+            .then(() => response.send({ hint, hintRetrievals }));
     })
 
     app.post('/sign-in', async (request, response) => {
@@ -115,7 +113,6 @@ new DB().connect(db => {
         }
     })
 
-    app.use('/', router);
     app.use('/admin', questsRoute(db));
 
     app.get('*', (request, response) => response.sendfile('./public/index.html'));
