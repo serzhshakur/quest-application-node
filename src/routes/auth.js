@@ -20,10 +20,8 @@ module.exports = db => {
             const isPasswordCorrect = bcrypt.compareSync(password, userData.password);
 
             if (isPasswordCorrect) {
-                const payload = {
-                    username: userData.username,
-                    id: userData.id
-                }
+                const { username, id } = userData;
+                const payload = { username, id };
                 const token = jwt.sign(payload, JWT_SECRET_TOKEN, { expiresIn: TOKEN_EXPIRATION_PERIOD });
                 res.status(200).send({ token })
             } else {
