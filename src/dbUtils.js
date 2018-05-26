@@ -34,7 +34,8 @@ module.exports.questExists = (db, questId) => {
 
 module.exports.querySessionInfo = (db, sessionId) => {
     return session = db.collection('sessions')
-        .find({ '_id': new ObjectID(sessionId) }).toArray()
+        .find({ '_id': new ObjectID(sessionId) })
+        .project({ _id: false }).toArray()
         .catch(err => console.error(`Error while trying to get question info for session id ${sessionId}`))
         .then(array => array[0]);
 }
