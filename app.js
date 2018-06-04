@@ -114,7 +114,7 @@ new DB().connect(db => {
         }
     })
 
-    app.use('/admin', questsRoute(db));
+    app.use('/my-admin', questsRoute(db));
 
     app.get('*', (request, response) => response.sendfile('./public/index.html'));
 
