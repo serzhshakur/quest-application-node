@@ -5,7 +5,7 @@ function queryQuest(db, questId) {
         .find({ 'id': questId })
         .project({ _id: false }).toArray()
         .then(array => array[0])
-        .catch(err => console.error(`Error while quering quest with id ${questId}`));
+        .catch(err => console.error(`Error while querying quest with id ${questId}`));
 }
 
 module.exports.queryQuest = queryQuest;
@@ -73,6 +73,22 @@ module.exports.createQuest = (db, quest) => {
     return db.collection('questions')
         .insertOne(quest)
         .catch(err => console.error(`Error while creating quest ${quest}`))
+}
+
+module.exports.deleteQuest = (db, questId) => {
+    return db.collection('questions')
+        .deleteOne({ id: questId })
+}
+
+module.exports.deleteSessionsForQuest = (db, questId) => {
+    return db.collection('questions')
+        .deleteMany({ questId })
+}
+
+module.exports.deleteQuest = (db, questId) => {
+    return db.collection('questions')
+        .deleteOne(questId)
+        .catch(err => console.error(`Unable to delete quest with id ${questId}`))
 }
 
 module.exports.updateQuest = (db, questId, newValues) => {
