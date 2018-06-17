@@ -86,9 +86,11 @@ new DB().connect(db => {
 
     app.get('/questions/final/', async (request, response) => {
         const sessionId = request.cookies.id;
-        let { questId, wrongAnswers, hintRetrievals } = await querySessionInfo(db, sessionId);
-        const finalWords = await queryQuestFinalWords(db, questId);
-        const result = { finalWords, wrongAnswers, hintRetrievals };
+        const sessionInfo = await querySessionInfo(db, sessionId);
+        const { created, updated, ...info } = sessionInfo;
+        const time = Math.floor((updated - created) / 1000);
+        const finalWords = await queryQuestFinalWords(db, info.questId);
+        const result = { finalWords, time, ...info };
         response.send(result);
     })
 
