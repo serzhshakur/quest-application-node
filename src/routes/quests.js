@@ -47,7 +47,7 @@ module.exports = db => {
         .delete(async (request, response) => {
             const { questId } = request.params;
             deleteQuest(db, questId)
-                .catch(() => response.status(400).send({ error: 'Unable to delete quest' }))
+                .catch(e => { console.log(e); response.status(400).send({ error: 'Unable to delete quest' }) })
                 .then(() => deleteSessionsForQuest(db, questId))
                 .catch(() => response.status(400).send({ error: 'Unable to delete sessions for quest' }))
                 .then(() => response.send({ error: false }))
