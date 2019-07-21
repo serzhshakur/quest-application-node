@@ -1,4 +1,4 @@
-const { MongoClient, Server } = require('mongodb');
+const {MongoClient, Server} = require('mongodb');
 
 class DB {
     constructor() {
@@ -14,7 +14,7 @@ class DB {
     }
 
     connect(callback) {
-        MongoClient.connect(this.getUrl(), (err, client) => {
+        MongoClient.connect(this.getUrl(), {useNewUrlParser: true}, (err, client) => {
             if (err) {
                 console.log(err);
             } else {
