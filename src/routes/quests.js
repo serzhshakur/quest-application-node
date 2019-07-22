@@ -62,7 +62,9 @@ module.exports = db => {
         const answer = sessions.map(session => {
                 const time = Math.floor((session.updated - session.created) / 1000)
                 return {
-                    ...session, time
+                    ...session, time,
+                    createdDate: new Date(session.created).toLocaleString("lv-LV"),
+                    finishedDate: new Date(session.finished).toLocaleString("lv-LV")
                 }
             }
         )
