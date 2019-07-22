@@ -60,11 +60,12 @@ module.exports = db => {
     router.get('/quests/:questId/sessions', async (request, response) => {
         const sessions = await querySessions(db, request.params.questId)
         const answer = sessions.map(session => {
+                const {created, finished} = session
                 const time = Math.floor((session.updated - session.created) / 1000)
                 return {
                     ...session, time,
-                    createdDate: new Date(session.created).toLocaleString("lv-LV"),
-                    finishedDate: new Date(session.finished).toLocaleString("lv-LV")
+                    createdDate: new Date(created).toLocaleString("lv-LV"),
+                    finishedDate: finished ? new Date(finished).toLocaleString("lv-LV") : null
                 }
             }
         )
