@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const authRouter = require('./auth')
+const {dateString} = require('../utils/dateUtils')
 
 const {
     createQuest,
@@ -11,7 +12,7 @@ const {
     querySessions,
     questExists,
     updateQuest
-} = require('../dbUtils');
+} = require('../db/queries');
 
 module.exports = db => {
 
@@ -64,8 +65,8 @@ module.exports = db => {
                 const time = Math.floor((session.updated - session.created) / 1000)
                 return {
                     ...session, time,
-                    createdDate: new Date(created).toLocaleString("lv-LV"),
-                    finishedDate: finished ? new Date(finished).toLocaleString("lv-LV") : null
+                    createdDate: dateString(created),
+                    finishedDate: finished ? dateString(finished) : null
                 }
             }
         )

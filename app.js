@@ -5,7 +5,7 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const questsRoute = require('./src/routes/quests');
 
-const {DB} = require('./src/db');
+const {DB} = require('./src/db/db');
 const {
     createSessionAndGetId,
     queryQuest,
@@ -16,7 +16,7 @@ const {
     queryQuestFinalWords,
     updateSession,
     finishSession
-} = require('./src/dbUtils');
+} = require('./src/db/queries');
 
 const PORT = process.env.PORT || 8080;
 

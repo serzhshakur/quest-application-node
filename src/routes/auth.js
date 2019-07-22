@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require("bcrypt");
 const jwt = require('jsonwebtoken');
-const { getUser } = require('../dbUtils');
+const { getUser } = require('../db/queries');
 
 const JWT_SECRET_TOKEN = process.env.JWT_SECRET_TOKEN
 const TOKEN_EXPIRATION_PERIOD = '20h'
