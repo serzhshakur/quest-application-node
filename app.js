@@ -14,7 +14,8 @@ const {
     questExists,
     queryQuestIntro,
     queryQuestFinalWords,
-    updateSession
+    updateSession,
+    finishSession
 } = require('./src/dbUtils');
 
 const PORT = process.env.PORT || 8080;
@@ -90,11 +91,10 @@ new DB().connect(db => {
 
     app.get('/questions/final/', async (request, response) => {
         const sessionId = request.cookies.id;
-        const sessionInfo = await querySessionInfo(db, sessionId);
-        const {created, updated, ...info} = sessionInfo;
-        const time = Math.floor((updated - created) / 1000);
-        const finalWords = await queryQuestFinalWords(db, info.questId);
-        const result = {finalWords, time, ...info};
+        const {created, finished, ...sessionInfo} = await finishSession(db, sessionId)
+        const time = Math.floor((finished - created) / 1000);
+        const finalWords = await queryQuestFinalWords(db, sessionInfo.questId);
+        const result = {finalWords, time, ...sessionInfo};
         response.send(result);
     })
 

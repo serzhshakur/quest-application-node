@@ -1,9 +1,9 @@
-const { ObjectID } = require('mongodb');
+const {ObjectID} = require('mongodb');
 
 function queryQuest(db, questId) {
     return db.collection('questions')
-        .find({ 'id': questId })
-        .project({ _id: false }).toArray()
+        .find({'id': questId})
+        .project({_id: false}).toArray()
         .then(array => array[0])
         .catch(err => console.error(`Error while querying quest with id ${questId}`));
 }
@@ -27,17 +27,34 @@ module.exports.queryQuestFinalWords = (db, questId) => {
 
 module.exports.questExists = (db, questId) => {
     return db.collection('questions')
-        .find({ 'id': questId }).count()
+        .find({'id': questId}).count()
         .catch(err => console.error("error while counting quests\n", err))
         .then(count => count > 0)
 }
 
 module.exports.querySessionInfo = (db, sessionId) => {
-    return session = db.collection('sessions')
-        .find({ '_id': new ObjectID(sessionId) })
-        .project({ _id: 0 }).toArray()
+    return db.collection('sessions')
+        .find({'_id': new ObjectID(sessionId)})
+        .project({_id: 0}).toArray()
         .catch(err => console.error(`Error while trying to get question info for session id ${sessionId}\n`, err))
         .then(array => array[0]);
+}
+
+module.exports.finishSession = (db, sessionId) => {
+    return db.collection('sessions')
+        .findOneAndUpdate({'_id': new ObjectID(sessionId)},
+            {
+                '$currentDate': {
+                    'finished': true
+                }
+            },
+            {
+                returnOriginal: false,
+                projection: {_id: false}
+            }
+        )
+        .catch(err => console.error(`Error updating session ${sessionId}: `, err))
+        .then(result => result.value);
 }
 
 module.exports.createSessionAndGetId = (db, questId) => {
@@ -57,7 +74,7 @@ module.exports.createSessionAndGetId = (db, questId) => {
 
 module.exports.updateSession = (db, sessionId, newValues) => {
     return db.collection('sessions')
-        .updateOne({ '_id': new ObjectID(sessionId) },
+        .updateOne({'_id': new ObjectID(sessionId)},
             {
                 "$set": newValues,
                 '$currentDate': {
@@ -74,7 +91,7 @@ module.exports.updateSession = (db, sessionId, newValues) => {
 module.exports.queryQuests = db => {
     return db.collection('questions')
         .find({})
-        .project({ _id: false }).toArray()
+        .project({_id: false}).toArray()
         .catch(err => console.error("Error while querying quests:\n", err));
 }
 
@@ -86,32 +103,39 @@ module.exports.createQuest = (db, quest) => {
 
 module.exports.deleteQuest = (db, questId) => {
     return db.collection('questions')
-        .deleteOne({ id: questId })
+        .deleteOne({id: questId})
 }
 
 module.exports.deleteSessionsForQuest = (db, questId) => {
     return db.collection('questions')
-        .deleteMany({ questId })
+        .deleteMany({questId})
 }
 
 module.exports.updateQuest = (db, questId, newValues) => {
     return db.collection('questions')
         .findOneAndUpdate(
-            { id: questId },
-            { "$set": newValues },
+            {id: questId},
+            {"$set": newValues},
             {
                 returnOriginal: false,
-                projection: { _id: false }
+                projection: {_id: false}
             }
         )
         .catch(err => console.error(`Error updating quest ${questId}: `, err))
         .then(result => result.value);
 }
 
+module.exports.querySessions = (db, questId) => {
+    return db.collection('sessions')
+        .find({'questId': questId})
+        .project({_id: false}).toArray()
+        .catch(err => console.error("Error while querying sessions:\n", err));
+}
+
 module.exports.getUser = (db, username) => {
     return db.collection('users')
-        .find({ 'username': username })
-        .project({ _id: false })
+        .find({'username': username})
+        .project({_id: false})
         .toArray()
         .catch(err => console.error(`Error getting a user ${username}: `, err))
         .then(arr => arr[0])
