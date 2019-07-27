@@ -20,16 +20,6 @@ const {
 
 const PORT = process.env.PORT || 8080;
 
-
-app.use(bodyParser.text({
-    type: "text/plain"
-}));
-app.use(bodyParser.urlencoded({
-    extended: true
-}));
-app.use(bodyParser.json());
-app.use(cookieParser())
-
 // https://stackoverflow.com/questions/42710057/fetch-cannot-set-cookies-received-from-the-server
 let corsOptions = {
     credentials: true
@@ -39,10 +29,18 @@ if (process.env.CORS_ORIGIN) {
     corsOptions.origin = process.env.CORS_ORIGIN
 }
 
-app.use(cors(corsOptions));
-
-//Frontend:
-app.use(express.static('public'))
+app
+    .use(bodyParser.text({
+        type: "text/plain"
+    }))
+    .use(bodyParser.urlencoded({
+        extended: true
+    }))
+    .use(bodyParser.json())
+    .use(cookieParser())
+    .use(cors(corsOptions))
+    //Frontend:
+    .use(express.static('public'))
 
 new DB().connect(db => {
 
@@ -57,7 +55,7 @@ new DB().connect(db => {
                 const {text, images} = questions[questionIndex];
                 Object.assign(body, {text, images, wrongAnswers, hintRetrievals})
             }
-            response.send(body);
+            response.status(200).send(body);
         })
 
         .post(async (request, response) => {
@@ -120,15 +118,26 @@ new DB().connect(db => {
         }
     })
 
-    app.put('/session', async (request, response) => {
-        const sessionId = request.cookies.id;
-        const name = request.body.name
-        if (!name) {
-            response.status(400).send({error: 'session name is null'});
-        }
-        updateSession(db, sessionId, {name})
-            .then(() => response.send())
-    })
+    app.route('/session')
+        .put(async (request, response) => {
+            const sessionId = request.cookies.id;
+            const name = request.body.name
+            if (!name) {
+                response.status(400).send({error: 'session name is null'});
+            }
+            updateSession(db, sessionId, {name})
+                .then(() => response.send())
+        })
+        .get(async (request, response) => {
+            const sessionId = request.cookies.id
+            if (!sessionId) {
+                response.status(401).send()
+            }
+            querySessionInfo(db, sessionId)
+                .then(result =>
+                    result ? response.send(result) : response.status(401).send()
+                )
+        })
 
     app.use('/my-admin', questsRoute(db));
 
