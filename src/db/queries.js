@@ -32,12 +32,53 @@ module.exports.questExists = (db, questId) => {
         .then(count => count > 0)
 }
 
+module.exports.isCodeAlreadyUsed = (db, questCode) => {
+    const params = {
+        questCode,
+        finished: {'$ne': null}
+    }
+    return db.collection('sessions')
+        .find(params).count()
+        .catch(err => console.error("error while counting sessions\n", err))
+        .then(count => count > 0)
+}
+
 module.exports.querySessionInfo = (db, sessionId) => {
     return db.collection('sessions')
         .find({'_id': new ObjectID(sessionId)})
         .project({_id: 0}).toArray()
         .catch(err => console.error(`Error while trying to get question info for session id ${sessionId}\n`, err))
         .then(array => array[0]);
+}
+
+module.exports.createSessionAndGetId = (db, questId, questCode) => {
+    return db.collection('sessions')
+        .insertOne(
+            {
+                'questId': questId,
+                'questCode': questCode,
+                'questionIndex': 0,
+                'wrongAnswers': 0,
+                'hintRetrievals': 0,
+                "created": new Date(),
+                "updated": new Date()
+            })
+        .catch(err => console.error(`Error while creating session for quest id ${questCode}\n`, err))
+        .then((r) => r.insertedId.toString())
+}
+
+module.exports.updateSession = (db, sessionId, newValues) => {
+    return db.collection('sessions')
+        .updateOne({'_id': new ObjectID(sessionId)},
+            {
+                "$set": newValues,
+                '$currentDate': {
+                    'updated': true
+                }
+            }
+        )
+        .catch(err => console.error(`Error updating session ${sessionId}: `, err))
+        .then(() => console.log(`successfully updated a session ${sessionId} with values ${JSON.stringify(newValues)}`));
 }
 
 module.exports.finishSession = (db, sessionId) => {
@@ -55,35 +96,6 @@ module.exports.finishSession = (db, sessionId) => {
         )
         .catch(err => console.error(`Error updating session ${sessionId}: `, err))
         .then(result => result.value);
-}
-
-module.exports.createSessionAndGetId = (db, questId) => {
-    return db.collection('sessions')
-        .insertOne(
-            {
-                'questId': questId,
-                'questionIndex': 0,
-                'wrongAnswers': 0,
-                'hintRetrievals': 0,
-                "created": new Date(),
-                "updated": new Date()
-            })
-        .catch(err => console.error(`Error while creating session for quest id ${questId}\n`, err))
-        .then((r) => r.insertedId.toString())
-}
-
-module.exports.updateSession = (db, sessionId, newValues) => {
-    return db.collection('sessions')
-        .updateOne({'_id': new ObjectID(sessionId)},
-            {
-                "$set": newValues,
-                '$currentDate': {
-                    'updated': true
-                }
-            }
-        )
-        .catch(err => console.error(`Error updating session ${sessionId}: `, err))
-        .then(() => console.log(`successfully updated a session ${sessionId} with values ${JSON.stringify(newValues)}`));
 }
 
 /// Admin stuff
@@ -111,7 +123,7 @@ module.exports.deleteSessionsForQuest = (db, questId) => {
         .deleteMany({questId})
 }
 
-module.exports.updateQuest = (db, questId, newValues) => {
+function updateQuest(db, questId, newValues) {
     return db.collection('questions')
         .findOneAndUpdate(
             {id: questId},
@@ -125,9 +137,34 @@ module.exports.updateQuest = (db, questId, newValues) => {
         .then(result => result.value);
 }
 
+module.exports.updateQuest = updateQuest
+
+module.exports.addNewCode = async (db, questId, newCode) => {
+    const quest = await queryQuest(db, questId)
+    const codes = quest.codes || []
+    codes.push(newCode)
+    const newValues = {...quest, codes: codes}
+    return await updateQuest(db, questId, newValues)
+}
+
+module.exports.updateCodeState = (db, questId, code, newValues) => {
+    return db.collection('questions')
+        .updateOne(
+            {id: questId, "codes.code": code},
+            {"$set": {"codes.$": newValues}},
+            {
+                returnOriginal: false,
+                projection: {_id: false}
+            }
+        )
+        .catch(err => console.error(`Error editing code ${code}: `, err))
+        .then(result => result.value);
+}
+
 module.exports.querySessions = (db, questId) => {
     return db.collection('sessions')
         .find({'questId': questId})
+        .sort({'updated': -1})
         .project({_id: false}).toArray()
         .catch(err => console.error("Error while querying sessions:\n", err));
 }

@@ -11,6 +11,7 @@ const {
     queryQuest,
     queryQuestion,
     querySessionInfo,
+    isCodeAlreadyUsed,
     questExists,
     queryQuestIntro,
     queryQuestFinalWords,
@@ -47,10 +48,15 @@ new DB().connect(db => {
     app.route('/questions')
         .get(async (request, response) => {
             const sessionId = request.cookies.id;
-            const {questionIndex, questId, wrongAnswers, hintRetrievals} = await querySessionInfo(db, sessionId);
+            const {
+                questionIndex,
+                questId,
+                wrongAnswers,
+                hintRetrievals
+            } = await querySessionInfo(db, sessionId);
             const {questions} = await queryQuest(db, questId);
             const isEnd = questions.length === questionIndex;
-            const body = {isEnd};
+            const body = {isEnd, questionNumber: questionIndex};
             if (!isEnd) {
                 const {text, images} = questions[questionIndex];
                 Object.assign(body, {text, images, wrongAnswers, hintRetrievals})
@@ -63,7 +69,7 @@ new DB().connect(db => {
             const sessionId = request.cookies.id;
             let {questionIndex, questId, wrongAnswers} = await querySessionInfo(db, sessionId);
             const {answer} = await queryQuestion(db, questId, questionIndex);
-            if (answer.toLowerCase() === userAnswer.toLowerCase()) {
+            if (answer.toLowerCase().trim() === userAnswer.toLowerCase().trim()) {
                 questionIndex++;
             } else {
                 wrongAnswers++;
@@ -105,27 +111,39 @@ new DB().connect(db => {
     })
 
     app.post('/sign-in', async (request, response) => {
-        const questId = request.body;
-        if (questId) {
-            const exists = await questExists(db, questId);
-            if (exists) {
-                const sessionId = await createSessionAndGetId(db, questId);
+        const questCode = request.body;
+        if (questCode && /\S*\/\S*/.test(questCode)) {
+            const questId = questCode.split('/')[0]
+            const questDoesExist = await questExists(db, questId)
+            if (!questDoesExist) {
+                response.status(400).send("Incorrect id provided")
+            }
+            const isAlreadyUsed = await isCodeAlreadyUsed(db, questCode)
+            if (!isAlreadyUsed) {
+                const sessionId = await createSessionAndGetId(db, questId, questCode);
                 response.cookie('id', sessionId);
                 response.status(200).send('ok');
             } else {
-                response.status(400).send("Incorrect id provided");
+                response.status(400).send({error: "Код уже был использован"});
             }
-        }
+        } else response.status(400).send({error: "Incorrect id provided"});
     })
 
     app.route('/session')
         .put(async (request, response) => {
             const sessionId = request.cookies.id;
-            const name = request.body.name
+            const {name, phone} = request.body
             if (!name) {
-                response.status(400).send({error: 'session name is null'});
+                response.status(400).send({error: 'название команды не указано'});
             }
-            updateSession(db, sessionId, {name})
+            if (!phone) {
+                response.status(400).send({error: 'телефон обязателен'});
+            }
+            if (!/\+?[0-9]{0,3}\W*(?:\d+\W*)+(\d{1,2})$/.test(phone)) {
+                response.status(400).send({error: 'телефон не соответствует формату'});
+            }
+
+            updateSession(db, sessionId, {name, phone})
                 .then(() => response.send())
         })
         .get(async (request, response) => {
@@ -137,6 +155,10 @@ new DB().connect(db => {
                 .then(result =>
                     result ? response.send(result) : response.status(401).send()
                 )
+        })
+        .delete(async (request, response) => {
+            response.clearCookie('id');
+            response.send()
         })
 
     app.use('/my-admin', questsRoute(db));
