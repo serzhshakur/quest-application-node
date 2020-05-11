@@ -12,10 +12,12 @@ const {
     queryQuestion,
     querySessionInfo,
     isCodeAlreadyUsed,
+    isCodeExists,
     questExists,
     queryQuestIntro,
     queryQuestFinalWords,
     updateSession,
+    updateCodeState,
     finishSession
 } = require('./src/db/queries');
 
@@ -118,9 +120,16 @@ new DB().connect(db => {
             if (!questDoesExist) {
                 response.status(400).send("Incorrect id provided")
             }
+            const codeDoesExist = await isCodeExists(db, questId)
+            if (!codeDoesExist) {
+                response.status(400).send("Incorrect id provided")
+            }
             const isAlreadyUsed = await isCodeAlreadyUsed(db, questCode)
             if (!isAlreadyUsed) {
                 const sessionId = await createSessionAndGetId(db, questId, questCode);
+                await updateCodeState(db, questId,
+                    {code: questCode, isGiven: true}
+                )
                 response.cookie('id', sessionId);
                 response.status(200).send('ok');
             } else {

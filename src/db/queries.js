@@ -32,6 +32,20 @@ module.exports.questExists = (db, questId) => {
         .then(count => count > 0)
 }
 
+module.exports.queryCodes = (db, questId) => {
+    return db.collection('questCodes')
+        .find({questId: questId})
+        .project({_id: false}).toArray()
+        .catch(err => console.error("error while counting quest codes\n", err))
+}
+
+module.exports.isCodeExists = (db, questCode) => {
+    return db.collection('questCodes')
+        .find({code: questCode}).count()
+        .catch(err => console.error("error while counting quest codes\n", err))
+        .then(count => count > 0)
+}
+
 module.exports.isCodeAlreadyUsed = (db, questCode) => {
     const params = {
         questCode,
@@ -139,25 +153,24 @@ function updateQuest(db, questId, newValues) {
 
 module.exports.updateQuest = updateQuest
 
-module.exports.addNewCode = async (db, questId, newCode) => {
-    const quest = await queryQuest(db, questId)
-    const codes = quest.codes || []
-    codes.push(newCode)
-    const newValues = {...quest, codes: codes}
-    return await updateQuest(db, questId, newValues)
+module.exports.addNewCode = async (db, newCode) => {
+    return db.collection('questCodes')
+        .insertOne(newCode)
+        .catch(err => console.error(`Error inserting code ${newCode.code}: \n`, err))
+        .then(result => result.value);
 }
 
-module.exports.updateCodeState = (db, questId, code, newValues) => {
-    return db.collection('questions')
-        .updateOne(
-            {id: questId, "codes.code": code},
-            {"$set": {"codes.$": newValues}},
+module.exports.updateCodeState = (db, questId, codeValues) => {
+    return db.collection('questCodes')
+        .findOneAndUpdate(
+            {code: codeValues.code},
+            {"$set": codeValues},
             {
                 returnOriginal: false,
                 projection: {_id: false}
             }
         )
-        .catch(err => console.error(`Error editing code ${code}: `, err))
+        .catch(err => console.error(`Error editing code ${codeValues.code}: `, err))
         .then(result => result.value);
 }
 

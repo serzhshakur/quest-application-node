@@ -1,18 +1,18 @@
 const {randomAlphaNumeric} = require("../utils/randomUtils");
-const {addNewCode} = require("../db/queries");
-
 const express = require('express');
 const router = express.Router();
 const authRouter = require('./auth')
 const {dateString} = require('../utils/dateUtils')
 
 const {
+    addNewCode,
     createQuest,
     deleteQuest,
     deleteSessionsForQuest,
     queryQuest,
     queryQuests,
     querySessions,
+    queryCodes,
     questExists,
     updateQuest
 } = require('../db/queries');
@@ -41,15 +41,19 @@ module.exports = db => {
             while (await questExists(db, id)) {
                 id = randomAlphaNumeric(5)
             }
-            const codes = [
-                {
-                    code: generateCodeForId(id),
-                    isGiven: false
-                }
-            ]
+            const code = {
+                questId: id,
+                code: generateCodeForId(id),
+                isGiven: false
+            }
 
-            const body = {name, id, codes: codes}
-            createQuest(db, body).then(() => response.send({error: false}))
+            try {
+                await createQuest(db, {name, id})
+                await addNewCode(db, code)
+                response.send({error: false})
+            } catch (e) {
+                response.status(400).send({error: "unable to create quest or adding first code"})
+            }
         })
 
     router.route('/quests/:questId')
@@ -86,6 +90,11 @@ module.exports = db => {
             }
         )
         response.send(answer);
+    })
+
+    router.get('/quests/:questId/codes', async (request, response) => {
+        const codes = await queryCodes(db, request.params.questId)
+        response.send(codes);
     })
 
     router.post('/quests/:questId/code', async (request, response) => {
