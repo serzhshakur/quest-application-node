@@ -92,24 +92,31 @@ module.exports = db => {
         response.send(answer);
     })
 
-    router.get('/quests/:questId/codes', async (request, response) => {
-        const codes = await queryCodes(db, request.params.questId)
-        response.send(codes);
-    })
-
-    router.post('/quests/:questId/code', async (request, response) => {
-        const codeObj = {
-            code: generateCodeForId(request.params.questId),
-            isGiven: false
-        }
-        try {
-            await addNewCode(db, request.params.questId, codeObj)
-            response.send({error: false, code: codeObj})
-        } catch (e) {
-            console.log(e)
-            response.status(400).send({error: 'Unable to add new code'})
-        }
-    })
+    router.route('/quests/:questId/codes')
+        .get(async (request, response) => {
+            const codes = await queryCodes(db, request.params.questId)
+            response.send(codes);
+        })
+        .post(async (request, response) => {
+            let questId = request.params.questId;
+            const codeObj = {
+                code: generateCodeForId(questId),
+                questId: questId,
+                isGiven: false
+            }
+            try {
+                await addNewCode(db, codeObj)
+                const codes = await queryCodes(db, questId)
+                if (codes.map(it => it.code).includes(codeObj.code)) {
+                    response.send({error: false, codes: codes})
+                } else {
+                    response.status(400).send({error: 'Unable to add new code'})
+                }
+            } catch (e) {
+                console.log(e)
+                response.status(400).send({error: 'Unable to add new code'})
+            }
+        })
 
     return router
 }
