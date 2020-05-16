@@ -1,15 +1,18 @@
+const {randomAlphaNumeric} = require("../utils/randomUtils");
 const express = require('express');
 const router = express.Router();
 const authRouter = require('./auth')
 const {dateString} = require('../utils/dateUtils')
 
 const {
+    addNewCode,
     createQuest,
     deleteQuest,
     deleteSessionsForQuest,
     queryQuest,
     queryQuests,
     querySessions,
+    queryCodes,
     questExists,
     updateQuest
 } = require('../db/queries');
@@ -18,22 +21,38 @@ module.exports = db => {
 
     router.use(authRouter(db));
 
+    function generateCodeForId(id) {
+        return id + '/' + randomAlphaNumeric(7).toUpperCase();
+    }
+
     router.route('/quests')
         .get(async (request, response) => {
             const quests = await queryQuests(db);
             response.send(quests);
         })
         .post(async (request, response) => {
-            const {id, name} = request.body;
-            if (!id || !name) {
-                response.status(400).send({error: 'Neither id nor name must be empty'});
+            const {name} = request.body;
+            if (!name) {
+                response.status(400).send({error: 'Name must be empty'});
                 return;
             }
-            const doesExist = await questExists(db, id);
-            if (doesExist) {
-                response.status(409).send({error: "Quest with this id already exist"});
-            } else {
-                createQuest(db, request.body).then(() => response.send({error: false}))
+            let id = randomAlphaNumeric(5)
+
+            while (await questExists(db, id)) {
+                id = randomAlphaNumeric(5)
+            }
+            const code = {
+                questId: id,
+                code: generateCodeForId(id),
+                isGiven: false
+            }
+
+            try {
+                await createQuest(db, {name, id})
+                await addNewCode(db, code)
+                response.send({error: false})
+            } catch (e) {
+                response.status(400).send({error: "unable to create quest or adding first code"})
             }
         })
 
@@ -72,6 +91,32 @@ module.exports = db => {
         )
         response.send(answer);
     })
+
+    router.route('/quests/:questId/codes')
+        .get(async (request, response) => {
+            const codes = await queryCodes(db, request.params.questId)
+            response.send(codes);
+        })
+        .post(async (request, response) => {
+            let questId = request.params.questId;
+            const codeObj = {
+                code: generateCodeForId(questId),
+                questId: questId,
+                isGiven: false
+            }
+            try {
+                await addNewCode(db, codeObj)
+                const codes = await queryCodes(db, questId)
+                if (codes.map(it => it.code).includes(codeObj.code)) {
+                    response.send({error: false, codes: codes})
+                } else {
+                    response.status(400).send({error: 'Unable to add new code'})
+                }
+            } catch (e) {
+                console.log(e)
+                response.status(400).send({error: 'Unable to add new code'})
+            }
+        })
 
     return router
 }

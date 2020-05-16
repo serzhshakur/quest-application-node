@@ -14,22 +14,25 @@ class DB {
     }
 
     connect(callback) {
-        MongoClient.connect(this.getUrl(), {useNewUrlParser: true}, (err, client) => {
-            if (err) {
-                console.log(err);
-            } else {
-                const db = client.db(this.db);
-                callback(db);
-            }
-            process.on('SIGINT', () => {
-                client.close((err, result) => {
-                    if (err) {
-                        console.log("Error occurred while trying to close connection to db \n", err);
-                    }
-                    process.exit(0);
+        MongoClient.connect(
+            this.getUrl(),
+            {useNewUrlParser: true, useUnifiedTopology: true},
+            (err, client) => {
+                if (err) {
+                    console.log(err);
+                } else {
+                    const db = client.db(this.db);
+                    callback(db);
+                }
+                process.on('SIGINT', () => {
+                    client.close((err, result) => {
+                        if (err) {
+                            console.log("Error occurred while trying to close connection to db \n", err);
+                        }
+                        process.exit(0);
+                    });
                 });
             });
-        });
     }
 
 }
