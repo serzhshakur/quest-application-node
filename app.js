@@ -119,10 +119,12 @@ new DB().connect(db => {
             const questDoesExist = await questExists(db, questId)
             if (!questDoesExist) {
                 response.status(400).send("Incorrect id provided")
+                return
             }
-            const codeDoesExist = await isCodeExists(db, questId)
+            const codeDoesExist = await isCodeExists(db, questCode)
             if (!codeDoesExist) {
                 response.status(400).send("Incorrect id provided")
+                return
             }
             const isAlreadyUsed = await isCodeAlreadyUsed(db, questCode)
             if (!isAlreadyUsed) {
@@ -131,7 +133,7 @@ new DB().connect(db => {
                     {code: questCode, isGiven: true}
                 )
                 response.cookie('id', sessionId);
-                response.status(200).send('ok');
+                response.send();
             } else {
                 response.status(400).send({error: "Код уже был использован"});
             }

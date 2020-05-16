@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require("bcrypt");
 const jwt = require('jsonwebtoken');
-const { getUser } = require('../db/queries');
+const {getUser} = require('../db/queries');
 
 const JWT_SECRET_TOKEN = process.env.JWT_SECRET_TOKEN
 const TOKEN_EXPIRATION_PERIOD = '20h'
@@ -10,22 +10,23 @@ const TOKEN_EXPIRATION_PERIOD = '20h'
 module.exports = db => {
     router.route('/login')
         .post(async (req, res) => {
-            const { username, password } = req.body;
+            const {username, password} = req.body;
             const userData = await getUser(db, username);
 
             if (!userData) {
-                res.status(401).send('no such user');
+                res.status(401).send({error: 'no such user'});
+                return
             }
 
             const isPasswordCorrect = bcrypt.compareSync(password, userData.password);
 
             if (isPasswordCorrect) {
-                const { username, id } = userData;
-                const payload = { username, id };
-                const token = jwt.sign(payload, JWT_SECRET_TOKEN, { expiresIn: TOKEN_EXPIRATION_PERIOD });
-                res.status(200).send({ token })
+                const {username, id} = userData;
+                const payload = {username, id};
+                const token = jwt.sign(payload, JWT_SECRET_TOKEN, {expiresIn: TOKEN_EXPIRATION_PERIOD});
+                res.status(200).send({token})
             } else {
-                res.status(401).send('incorrect password');
+                res.status(401).send({error: 'incorrect password'});
             }
         })
 
