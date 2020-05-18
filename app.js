@@ -86,7 +86,6 @@ new DB().connect(db => {
 
     app.get('/questions/intro/', async (request, response) => {
         const sessionId = request.cookies.id;
-        console.log(sessionId)
         if (!sessionId) {
             response.status(400).send({error: 'session id is null'});
         }

@@ -17,7 +17,9 @@ module.exports.queryQuestion = (db, questId, questionIndex) => {
 
 module.exports.queryQuestIntro = (db, questId) => {
     return queryQuest(db, questId)
-        .then(quest => quest.intro);
+        .then(({intro, isTeamNameRequired, isPhoneRequired}) => {
+            return {intro, isTeamNameRequired, isPhoneRequired}
+        });
 }
 
 module.exports.queryQuestFinalWords = (db, questId) => {
