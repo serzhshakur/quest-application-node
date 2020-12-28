@@ -178,7 +178,7 @@ new DB().connect(db => {
 
     app.use('/my-admin', questsRoute(db));
 
-    app.get('*', (request, response) => response.sendfile('./public/index.html'));
+    app.get('*', (request, response) => response.sendFile('./public/index.html'));
 
     app.listen(PORT);
 
