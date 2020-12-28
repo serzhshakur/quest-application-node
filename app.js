@@ -143,14 +143,19 @@ new DB().connect(db => {
         .put(async (request, response) => {
             const sessionId = request.cookies.id;
             const {name, phone} = request.body
-            if (!name) {
+            const {questId} = await querySessionInfo(db, sessionId)
+            const {isTeamNameRequired, isPhoneRequired} = await queryQuest(db, questId)
+
+            if (isTeamNameRequired && (!name || name.trim().length === 0)) {
                 response.status(400).send({error: 'название команды не указано'});
             }
-            if (!phone) {
-                response.status(400).send({error: 'телефон обязателен'});
-            }
-            if (!/\+?[0-9]{0,3}\W*(?:\d+\W*)+(\d{1,2})$/.test(phone)) {
-                response.status(400).send({error: 'телефон не соответствует формату'});
+            if (isPhoneRequired) {
+                if (!phone) {
+                    response.status(400).send({error: 'телефон обязателен'});
+                }
+                if (!/\+?[0-9]{0,3}\W*(?:\d+\W*)+(\d{1,2})$/.test(phone)) {
+                    response.status(400).send({error: 'телефон не соответствует формату'});
+                }
             }
 
             updateSession(db, sessionId, {name, phone})

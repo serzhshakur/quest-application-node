@@ -31,7 +31,7 @@ module.exports = db => {
             response.send(quests);
         })
         .post(async (request, response) => {
-            const {name} = request.body;
+            const {name, isTeamNameRequired, isPhoneRequired} = request.body;
             if (!name) {
                 response.status(400).send({error: 'Name must be empty'});
                 return;
@@ -46,9 +46,17 @@ module.exports = db => {
                 code: generateCodeForId(id),
                 isGiven: false
             }
+            const entry = {id, name, isTeamNameRequired, isPhoneRequired};
+
+            if (isTeamNameRequired === null || isTeamNameRequired === undefined) {
+                entry.isTeamNameRequired = false
+            }
+            if (isPhoneRequired === null || isPhoneRequired === undefined) {
+                entry.isPhoneRequired = false
+            }
 
             try {
-                await createQuest(db, {name, id})
+                await createQuest(db, entry)
                 await addNewCode(db, code)
                 response.send({error: false})
             } catch (e) {
