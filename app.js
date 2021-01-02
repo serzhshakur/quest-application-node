@@ -99,7 +99,7 @@ new DB().connect(db => {
         const {created, finished, ...sessionInfo} = await finishSession(db, sessionId)
         const time = Math.floor((finished - created) / 1000);
         const finalWords = await queryQuestFinalWords(db, sessionInfo.questId);
-        const result = {finalWords, time, ...sessionInfo};
+        const result = {...finalWords, time, ...sessionInfo};
         response.send(result);
     })
 

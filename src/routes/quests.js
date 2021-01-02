@@ -46,7 +46,11 @@ module.exports = db => {
                 code: generateCodeForId(id),
                 isGiven: false
             }
-            const entry = {id, name, isTeamNameRequired, isPhoneRequired};
+            const entry = {
+                id, name, isTeamNameRequired, isPhoneRequired,
+                showDonationSection: false,
+                questions: []
+            };
 
             if (isTeamNameRequired === null || isTeamNameRequired === undefined) {
                 entry.isTeamNameRequired = false

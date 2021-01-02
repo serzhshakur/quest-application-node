@@ -24,7 +24,9 @@ module.exports.queryQuestIntro = (db, questId) => {
 
 module.exports.queryQuestFinalWords = (db, questId) => {
     return queryQuest(db, questId)
-        .then(quest => quest.finalWords);
+        .then(({finalWords, showDonationSection}) => {
+            return {finalWords, showDonationSection}
+        });
 }
 
 module.exports.questExists = (db, questId) => {
