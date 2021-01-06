@@ -89,6 +89,25 @@ module.exports = db => {
                 .then(() => response.send({error: false}))
         })
 
+    router.post('/quests/:questId/clone', async (request, response) => {
+        const quest = await queryQuest(db, request.params.questId);
+        let id = randomAlphaNumeric(5)
+
+        while (await questExists(db, id)) {
+            id = randomAlphaNumeric(5)
+        }
+
+        const newName = quest.name + " - copy"
+
+        const entry = {
+            ...quest, id, name: newName
+        };
+
+        await createQuest(db, entry)
+
+        response.send(quest);
+    })
+
     router.get('/quests/:questId/sessions', async (request, response) => {
         const sessions = await querySessions(db, request.params.questId)
         const answer = sessions.map(session => {

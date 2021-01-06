@@ -3,7 +3,7 @@ const app = express();
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
-const questsRoute = require('./src/routes/quests');
+const questsRoute = require('./src/routes/adminApi');
 
 const {DB} = require('./src/db/db');
 const {
