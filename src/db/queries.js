@@ -5,7 +5,7 @@ function queryQuest(db, questId) {
         .find({'id': questId})
         .project({_id: false}).toArray()
         .then(array => array[0])
-        .catch(err => console.error(`Error while querying quest with id ${questId}`));
+        .catch(() => console.error(`Error while querying quest with id ${questId}`));
 }
 
 module.exports.queryQuest = queryQuest;
@@ -69,7 +69,7 @@ module.exports.querySessionInfo = (db, sessionId) => {
         .then(array => array[0]);
 }
 
-module.exports.createSessionAndGetId = (db, questId, questCode) => {
+module.exports.createSessionAndGetId = (db, questId, questCode = null) => {
     return db.collection('sessions')
         .insertOne(
             {
@@ -78,6 +78,7 @@ module.exports.createSessionAndGetId = (db, questId, questCode) => {
                 'questionIndex': 0,
                 'wrongAnswers': 0,
                 'hintRetrievals': 0,
+                'isNewSession': true,
                 "created": new Date(),
                 "updated": new Date()
             })

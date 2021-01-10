@@ -100,6 +100,8 @@ new DB().connect(db => {
         const time = Math.floor((finished - created) / 1000);
         const finalWords = await queryQuestFinalWords(db, sessionInfo.questId);
         const result = {...finalWords, time, ...sessionInfo};
+
+        response.clearCookie('id');
         response.send(result);
     })
 
@@ -143,8 +145,10 @@ new DB().connect(db => {
         .put(async (request, response) => {
             const sessionId = request.cookies.id;
             const {name, phone} = request.body
-            const {questId} = await querySessionInfo(db, sessionId)
-            const {isTeamNameRequired, isPhoneRequired} = await queryQuest(db, questId)
+            const session = await querySessionInfo(db, sessionId)
+            if (!session) response.status(401).send({error: "no session found"})
+
+            const {isTeamNameRequired, isPhoneRequired} = await queryQuest(db, session.questId)
 
             if (isTeamNameRequired && (!name || name.trim().length === 0)) {
                 response.status(400).send({error: 'название команды не указано'});
@@ -158,7 +162,7 @@ new DB().connect(db => {
                 }
             }
 
-            updateSession(db, sessionId, {name, phone})
+            updateSession(db, sessionId, {name, phone, isNewSession: false})
                 .then(() => response.send())
         })
         .get(async (request, response) => {
@@ -167,14 +171,63 @@ new DB().connect(db => {
                 response.status(401).send()
             }
             querySessionInfo(db, sessionId)
-                .then(result =>
-                    result ? response.send(result) : response.status(401).send()
+                .then(session =>
+                    session
+                        ? response.send(session)
+                        : response.status(401).send()
                 )
         })
         .delete(async (request, response) => {
             response.clearCookie('id');
             response.send()
         })
+
+    app.put('/session/startover', async (request, response) => {
+        const sessionId = request.cookies.id;
+
+        const session = await querySessionInfo(db, sessionId)
+        if (!session) {
+            response.status(404).send({error: "no session found"})
+            return
+        }
+
+        updateSession(db, sessionId, {questionIndex: 0})
+            .then(() => response.send())
+    })
+
+    app.get('/session/:questId', async (request, response) => {
+        const {questId} = request.params;
+        const existingSessionId = request.cookies.id
+
+        if (existingSessionId) {
+            const session = await querySessionInfo(db, existingSessionId)
+            if (!session) {
+                response.status(404).send({error: "session not found"})
+                return
+            }
+            if (session.questId === questId) {
+                response.send(session)
+                return
+            } else response.clearCookie('id');
+        }
+
+        const quest = await queryQuest(db, questId);
+        if (!quest) {
+            response.status(404).send({error: "quest not found"})
+            return
+        }
+
+        const {isCodeRequired} = quest;
+        if (isCodeRequired || isCodeRequired === null || isCodeRequired === undefined) {
+            response.status(401).send({error: "unable to proceed without code"})
+        } else {
+            const sessionId = await createSessionAndGetId(db, questId);
+            const session = await querySessionInfo(db, sessionId)
+
+            response.cookie('id', sessionId);
+            response.send(session);
+        }
+    })
 
     app.use('/my-admin', questsRoute(db));
 
