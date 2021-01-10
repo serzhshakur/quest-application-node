@@ -151,7 +151,10 @@ new DB().connect(db => {
             const sessionId = request.cookies.id;
             const {name, phone} = request.body
             const session = await querySessionInfo(db, sessionId)
-            if (!session) response.status(401).send({error: "no session found"})
+            if (!session) {
+                response.status(401).send({error: "no session found"})
+                return
+            }
 
             const {isTeamNameRequired, isPhoneRequired} = await queryQuest(db, session.questId)
 
