@@ -96,6 +96,11 @@ new DB().connect(db => {
 
     app.get('/questions/final/', async (request, response) => {
         const sessionId = request.cookies.id;
+        const session = await querySessionInfo(db, sessionId)
+        if (!session) {
+            response.status(401).send({error: `no session found with id ${sessionId}`})
+            return
+        }
         const {created, finished, ...sessionInfo} = await finishSession(db, sessionId)
         const time = Math.floor((finished - created) / 1000);
         const finalWords = await queryQuestFinalWords(db, sessionInfo.questId);
